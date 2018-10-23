@@ -1,0 +1,151 @@
+---
+title: "Blocking"
+author: "Kailin Lu"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r}
+library(recordlinkR)
+
+# Load sample Iowa data
+data(iowa_sample)
+```
+
+
+### Dataset Description
+
+The sample Iowa dataset contains last name, first name, year of birth, and middle initial for a subset of names from the 1915 and the 1940 Iowa Census. Unique identifiers `uid1915` and `hhid` are available in the iowa_1915 and iowa_1940 datasets respectively, but do not correspond across datasets. The rows of iwoa_matches denote true links using the row index from iowa_1915 and iowa_1940. 
+
+```{r}
+head(iowa_1915)
+```
+
+
+### Train Encoder Model for Blocking 
+
+Blocking on last name 
+
+```{r}
+namesA <- iowa_1915$lname1915[iowa_sample_matches$index1915]
+namesB <- iowa_1940$lname1940[iowa_sample_matches$index1940]
+encoder <- trainModel(namesA = namesA, namesB = namesB, dim.latent = 8,
+                      dim.encode = 128, dim.decode = 128, 
+                      num.encode.layers = 1, num.decode.layers = 1, 
+                      lr = 1e-4, max.length = 12, earlystop = F, batch.size=8, 
+                      save.dir = '~/blocking_models/iowa_last_8/', verbose=1)
+```
+
+
+
+### (Optional) Train Encoder for Comparison 
+
+```{r}
+encoder <- trainModel(namesA = iowa_1915$lname1915, namesB = iowa_1940$lname1940)
+```
+
+
+### Create Blocks 
+
+```{r}
+cols.exact <- list('A' = 'fname1915', 'B' = 'fname1940')
+cols.numeric <- list('A' = 'yob1915', 'B' = 'yob1940')
+cols.encoder <- list('A' = 'lname1915', 'B' = 'lname1940')
+```
+
+```{r}
+blocks <- block(dfA = iowa_1915, dfB = iowa_1940, 
+               cols.encoder = cols.encoder, 
+               cols.exact = cols.exact, 
+               cols.numeric = cols.numeric, numeric.range = 1, 
+               encoder.model.path = '~/blocking_models/iowa_first_4/encoder.h5', encoder.block.method = 'binary', 
+               known.matches = iowa_sample_matches[iowa_sample_matches$match == 1,1:2])
+```
+
+
+```{r}
+compare.string = list('A' = 'lname1915', 'B' = 'lname1940')
+compare.encoded.string = list('A' = 'lname1915', 'B' = 'lname1940')
+compare.numeric = list('A' = 'yob1915', 'B' = 'yob1940')
+compare.exact = list('A' = c('fname1915', 'yob1915'), 'B' = c('fname1940', 'yob1940'))
+```
+
+```{r}
+dfA <- blocks[['dfA']]
+dfB <- blocks[['dfB']]
+bl <- blocks[['blocks']]
+```
+
+
+
+```{r}
+comparisons <- compare(dfA, dfB, bl, 
+                       compare.string.sim = compare.string, 
+                       compare.exact = compare.exact, 
+                       compare.numeric = compare.numeric)
+```
+
+```{r}
+comparisons$match <- iowa_sample_matches$match
+colnames(comparisons) <- c('a', 'b', 'c', 'd', 'match')
+head(comparisons)
+```
+
+
+```{r}
+library(boot)
+train.idx <- sample(1:nrow(comparisons), nrow(comparisons) * .8)
+comparisons.train <- comparisons[train.idx,]
+comparisons.test <- comparisons[-train.idx,]
+link.glm <- glm(match ~ . , data = comparisons.train, family = binomial())
+summary(link.glm)
+```
+
+```{r}
+# K-fold CV Error
+cv.err <- cv.glm(comparisons.train, link.glm, K=10)$delta
+cv.err
+```
+
+```{r}
+pred <- predict(link.glm, comparisons.test, type='response')
+pred <- pred >= .5
+sum(pred == comparisons.test$match) / length(pred)
+```
+```{r}
+bl$match <- apply(bl, 1, function(x) ifelse(any(x[1] == iowa_true_matches$index1915 & 
+                                                x[2] == iowa_true_matches$index1940), 1,0))
+```
+
+```{r}
+sum(bl$match)
+```
+
+
+```{r}
+colnames(comparisons) <- c('a', 'b', 'c', 'd')
+pred <- predict(link.glm, comparisons.test, type='response')
+pred <- pred >= .9
+sum(pred == comparisons.test$match) / length(pred)
+```
+
+```{r}
+# SVM 
+library(e1071)
+svm.model <- svm(as.factor(match) ~ . , data = comparisons.train) 
+
+tuned <- tune.svm(as.factor(match) ~ . , data = comparisons.train, gamma = 10^-2, cost = 10^2, tunecontrol=tune.control(cross=10))
+
+svm.model
+```

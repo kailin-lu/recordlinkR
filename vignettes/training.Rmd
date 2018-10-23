@@ -1,0 +1,81 @@
+---
+title: "Training Encoding Models"
+author: "Kailin Lu"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r}
+library(recordlinkR)
+
+# Load sample Iowa data
+data(iowa_sample)
+```
+
+```{r}
+namesA = iowa_1915$fname1915[iowa_matches$index1915]
+namesB = iowa_1940$fname1940[iowa_matches$index1940]
+```
+
+```{r}
+length(namesB)
+```
+
+
+```{r}
+encoder4 <- trainModel(namesA = namesA, 
+                       namesB = namesB, 
+                       dim.latent = 4, 
+                       dim.encode = 128, 
+                       dim.decode = 128, 
+                       max.length = 11, 
+                       num.encode.layers = 1, 
+                       num.decode.layers = 1, 
+                       batch.size = 16,
+                       epochs = 500, 
+                       lr = 1e-3,
+                       validation.split = .2, 
+                       save.dir = '~/blocking_models/iowa_first_4/', 
+                       reconstruct = TRUE, 
+                       reconstruct.n = 5, 
+                       reconstruct.display = 10, 
+                       earlystop = TRUE, 
+                       earlystop.patience = 15, 
+                       tensorboard = TRUE, 
+                       tensorboard.runid = as.character(Sys.time()), 
+                       verbose = 2)
+```
+
+
+```{r}
+plotNames(names=namesA, n.samples = 1000, encoder.model.path = "~/blocking_models/iowa_first_4/encoder.h5") 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

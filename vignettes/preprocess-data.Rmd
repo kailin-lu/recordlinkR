@@ -1,0 +1,54 @@
+---
+title: "Preprocessing Data"
+author: "Kailin Lu"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r}
+library(recordlinkR)
+```
+
+
+## An Example Dataset 
+
+Datasets with name fields can come in a variety of formats. some datasets may provide full names whereas others may have separate columns for first and last. Full names can be listed in order of <FIRST, LAST> or <LAST, FIRST>. Additionally, there may be inconsistencies in how names are capitalized and whether punctuation is included. 
+
+Below is an example of a dataset with several name columns following different formats. 
+
+```{r}
+# Some sample character and numeric data 
+names <- c('Doe, Jon', 'GRAY, Amy**', 'JACKSON, MICHAEL', 'smith, jane')
+mothers.names <- c('Dorian\' Do', 'Brittany John-son Smith', 'Mary JACKSON', 'Sam')
+nicknames <- c('JON', 'AMY', 'MIKE', 'JAN')
+age <- c(15, 14, 12, 17)
+
+# Create dataframe
+data <- data.frame(names, mothers.names, nicknames, age, stringsAsFactors = FALSE)
+
+knitr::kable(data, caption = 'Sample Dataframe')
+```
+
+```{r}
+data.cleaned <- cleanNames(data,
+                           cols = c('names', 'mothers.names', 'nicknames'),
+                           split = T,
+                           split.pattern = c(',', ' '),
+                           new.col.names = list('names' = c('last', 'first'),
+                                                'mothers.names' = c('first.m', 'last.m')),
+                           lower = T,
+                           strip.punctuation = T)
+
+knitr::kable(data.cleaned, caption = 'Cleaned Sample Dataframe')
+```
