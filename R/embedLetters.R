@@ -6,8 +6,6 @@ require(tensorflow)
 #' Embed a character vector into one-hot encoded array
 #' 
 #' One-hot encoding will have dimension 28 for 27 lower case letters as well as a space 
-#' 
-#' @usage embedLetters(names, max.length)
 #'  
 #' @param names Character vector 
 #' @param max.length Numeric representing number of letters to keep for each name. 
@@ -35,22 +33,20 @@ embedLetters <- function(names, max.length = 12) {
   for (i in 1:(length(names))) {
     name <- head(strsplit(names[i], split='')[[1]], max.length)
     for (j in 1:length(name)) {
-      k <- recordlinkR:::letters_index[name[j]][[1]]
+      k <- letters_index[name[j]][[1]]
       # Add in index if character j exists in the letters index
       if (length(k) > 0) {
         vec.names[i, j] <- k
       }
     }
   }
-  return (keras::to_categorical(vec.names, length(recordlinkR:::letters_index)+1) )
+  return (keras::to_categorical(vec.names, length(letters_index)+1) )
 }
 
 
 #' disembedLetters
 #' 
 #' Revert embedded array back into a character vector 
-#' 
-#' @usage disembedLetters(embeddedArray)
 #' 
 #' @param embeddedArray 3-dim array of one-hot encoded characters 
 #'
@@ -75,7 +71,7 @@ disembedName <- function(x) {
   name <- rep('', length(x))
   for (i in 1:length(x)) {
     if (x[i] <= 27  & x[i] > 0) {
-      name[i] <- names(recordlinkR:::letters_index[x[i]])
+      name[i] <- names(letters_index[x[i]])
     }
   }
   name <- paste(name, collapse='')

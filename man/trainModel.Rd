@@ -4,10 +4,13 @@
 \alias{trainModel}
 \title{trainModel}
 \usage{
-trainModel(namesA, namesB, dim.latent, dim.encode, dim.decode, 
-max.length, num.encode.layers, num.decode.layers, batch.size, epochs, 
-lr, validation.split, save.dir, earlystop, earlystop.patience, 
-tensorboard, tensorboard.runid, verbose)
+trainModel(namesA, namesB, dim.latent = 8, dim.encode = 64,
+  dim.decode = 64, max.length = 12, num.encode.layers = 2,
+  num.decode.layers = 2, batch.size = 32, epochs = 500, lr = 1e-04,
+  validation.split = 0.2, save.dir = "~/blocking_models/",
+  reconstruct = TRUE, reconstruct.n = 5, reconstruct.display = 20,
+  earlystop = TRUE, earlystop.patience = 10, tensorboard = TRUE,
+  tensorboard.runid = as.character(Sys.time()), verbose = 2)
 }
 \arguments{
 \item{namesA}{Character vector of names}
@@ -36,6 +39,12 @@ Length of namesA and namesB must be equal.}
 \item{validation.split}{Percentage of data to save for validation}
 
 \item{save.dir}{Directory to save the trained encoder}
+
+\item{reconstruct}{Whether or not show reconstructions}
+
+\item{reconstruct.n}{How many reconstructions to show}
+
+\item{reconstruct.display}{After many epochs to show reconstructions}
 
 \item{earlystop}{TRUE if stopping early when validation loss is no longer decreasing,
 if FALSE then train for all epochs}

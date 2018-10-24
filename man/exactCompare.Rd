@@ -6,6 +6,11 @@
 \usage{
 exactCompare(vec.A, vec.B)
 }
+\arguments{
+\item{vec.A}{exact vector from dfA}
+
+\item{vec.B}{exact vector from dfB}
+}
 \value{
 vector 1 for exact match, 0 for no match
 }

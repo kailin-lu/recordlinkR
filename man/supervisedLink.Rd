@@ -6,17 +6,56 @@
 \usage{
 supervisedLink(dfA, dfB, train.indices, validation.split = 0.2,
   method = "log", blocks = NULL, block.exact = NULL,
-  block.numeric = NULL, block.numeric.range = NULL, block.encoder = NULL,
-  block.encoder.model.path = NULL, block.encoder.method = "cluster",
-  comparisons = NULL, compare.string.encoder = NULL,
-  compare.encoder.model.path = NULL, compare.string.sim = NULL,
-  string.sim.method = "jw", compare.numeric = NULL, compare.exact = NULL,
-  n.cores = parallel::detectCores() - 1)
+  block.numeric = NULL, block.numeric.range = NULL,
+  block.encoder = NULL, block.encoder.model.path = NULL,
+  block.encoder.method = "cluster", comparisons = NULL,
+  compare.string.encoder = NULL, compare.encoder.model.path = NULL,
+  compare.string.sim = NULL, string.sim.method = "jw",
+  compare.numeric = NULL, compare.exact = NULL,
+  n.cores = parallel::detectCores() - 1, seed = 0)
 }
 \arguments{
 \item{dfA}{dataframe}
 
 \item{dfB}{dataframe}
+
+\item{train.indices}{train indicies}
+
+\item{validation.split}{validation}
+
+\item{method}{classification method}
+
+\item{blocks}{block class}
+
+\item{block.exact}{block exact columns}
+
+\item{block.numeric}{block numeric cols}
+
+\item{block.numeric.range}{block numeric range}
+
+\item{block.encoder}{encoder block cols}
+
+\item{block.encoder.model.path}{model path}
+
+\item{block.encoder.method}{cluster or binary}
+
+\item{comparisons}{comparisons matrix}
+
+\item{compare.string.encoder}{string encoder compare cols}
+
+\item{compare.encoder.model.path}{compare model path}
+
+\item{compare.string.sim}{String similarity}
+
+\item{string.sim.method}{Jaro Winkler}
+
+\item{compare.numeric}{numeric cols}
+
+\item{compare.exact}{exact cols}
+
+\item{n.cores}{number of cores to parallelize over}
+
+\item{seed}{set random seed}
 }
 \value{
 list

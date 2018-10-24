@@ -2,8 +2,18 @@
 #' 
 #' Generate comparison matrix for pairs of records 
 #' 
-#' @return List
+#' @param dfA datafarme 
+#' @param dfB dataframe
+#' @param blocks block indices 
+#' @param compare.string.encoder string encoder cols 
+#' @param encoder.model.path Path to encoder model 
+#' @param compare.string.sim string similiarity cols 
+#' @param string.sim.method Jaro Winkler vs. cosine 
+#' @param compare.numeric numeric compare field 
+#' @param compare.exact exact compare field 
+#' @param n.cores Cores to parallelize over 
 #' 
+#' @return List comparison matrix
 #' @export
 compare <- function(dfA, dfB, blocks,
                     compare.string.encoder = NULL,
@@ -12,9 +22,9 @@ compare <- function(dfA, dfB, blocks,
                     string.sim.method = 'jw', 
                     compare.numeric = NULL, 
                     compare.exact = NULL, 
-                    n.cores = detectCores()-1) {
+                    n.cores = parallel::detectCores()-1) {
   # Check data types and vector lengths 
-  all.comparisons <- list(compare.string, compare.encoded.string, compare.numeric, compare.exact)
+  all.comparisons <- list(compare.string.encoder, compare.string.sim, compare.numeric, compare.exact)
   
   # Check that vars in in each list are the same length for A and B 
   for (var in all.comparisons) {
@@ -46,7 +56,7 @@ compare <- function(dfA, dfB, blocks,
   if (!is.null(compare.exact)) {
     exact.list <- parallel::mclapply(1:length(compare.exact[['A']]), compareVecs, 
                                                     compare.list = compare.exact,
-                                                    func = exactCompare, 
+                                                    func = recordlinkR::exactCompare, 
                                                     mc.cores = n.cores)
     for (j in 1:length(exact.list)) {
       comparisons[[i]] <- exact.list[[j]]
@@ -58,7 +68,7 @@ compare <- function(dfA, dfB, blocks,
   if (!is.null(compare.numeric)) {
     numeric.list <- parallel::mclapply(1:length(compare.numeric[['A']]), compareVecs,
                                                       compare.list = compare.numeric,
-                                                      func = numCompare,
+                                                      func = recordlinkR::numCompare,
                                                       mc.cores = n.cores)
     for (j in 1:length(numeric.list)) {
       comparisons[[i]] <- numeric.list[[j]]
@@ -68,9 +78,9 @@ compare <- function(dfA, dfB, blocks,
   }
   
   if (!is.null(compare.string.sim)) {
-    string.list <- data.table(parallel::mclapply(1:length(compare.string[['A']]), compareVecs,
-                                                     compare.list = compare.string,
-                                                     func = stringCompare,
+    string.list <- data.table::data.table(parallel::mclapply(1:length(compare.string.sim[['A']]), compareVecs,
+                                                     compare.list = compare.string.sim,
+                                                     func = recordlinkR::stringCompare,
                                                      mc.cores = n.cores))
     for (j in 1:length(string.list)) {
       comparisons[[i]] <- string.list[[j]]
@@ -78,8 +88,6 @@ compare <- function(dfA, dfB, blocks,
     }
     rm(string.list)
   }
-
-  #encoding <- encodeCompare()
   comparisons <- data.frame(comparisons)
   colnames(comparisons) <- cols
   return(comparisons)
@@ -87,6 +95,9 @@ compare <- function(dfA, dfB, blocks,
 
 
 #' exactCompare
+#' 
+#' @param vec.A exact vector from dfA 
+#' @param vec.B exact vector from dfB
 #' 
 #' @return vector 1 for exact match, 0 for no match
 #' @export
@@ -97,19 +108,26 @@ exactCompare <- function(vec.A, vec.B) {
 
 #' numCompare
 #' 
-#' @return 
+#' @param vec.A exact vector from dfA 
+#' @param vec.B exact vector from dfB
+#' 
+#' @return vector comparisons
 #' @export 
 numCompare <- function(vec.A, vec.B) {
   diff <- vec.A - vec.B
   max.val <- max(diff) 
   min.val <- min(diff)
   range <- max.val - min.val  
-  unlist(mclapply(diff, function(x) {(x-min.val) / range}, mc.cores=detectCores()-1))
+  unlist(parallel::mclapply(diff, function(x) {(x-min.val) / range}, mc.cores=parallel::detectCores()-1))
 }
 
 #' stringCompare
 #' 
-#' @return dataframe 
+#' @param vec.A exact vector from dfA 
+#' @param vec.B exact vector from dfB
+#' @param method Jaro Winkler
+#' 
+#' @return dataframe difference
 #' @export 
 stringCompare <- function(vec.A, vec.B, method = 'jw') {
   sim <- stringdist::stringsim(vec.A, vec.B, method = method)
@@ -117,6 +135,11 @@ stringCompare <- function(vec.A, vec.B, method = 'jw') {
 
 #' encodeCompare 
 #' 
+#' @param vec.A exact vector from dfA 
+#' @param vec.B exact vector from dfB
+#' @param encoder.model.path model path
+#' 
+#' @return vector comparisons
 #' @export
 encodeCompare <- function(vec.A, vec.B, encoder.model.path = NULL) {
   encoder <- keras::load_model_hdf5(encoder.model.path)

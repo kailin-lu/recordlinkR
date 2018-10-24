@@ -10,10 +10,12 @@ blockBinaryEncoder(encoded.A, encoded.B, n.cores)
 \item{encoded.A}{Matrix of encoded values}
 
 \item{encoded.B}{Matrix of encoded values}
+
+\item{n.cores}{Number of cores to parallelize}
 }
 \value{
 List
 }
 \description{
-Block on binary
+blockBinaryEncoder
 }

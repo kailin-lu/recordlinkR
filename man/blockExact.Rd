@@ -12,6 +12,8 @@ blockExact(dfA, dfB, cols.exact, n.cores)
 \item{dfB}{Dataframe to be linked to `dfA`}
 
 \item{cols.exact}{List with columns in dfA to be exactly matched to columns in dfB}
+
+\item{n.cores}{cores}
 }
 \value{
 Nested list where each list corresponds to one column in cols.exact. Each sublist 

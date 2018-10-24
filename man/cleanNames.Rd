@@ -4,24 +4,24 @@
 \alias{cleanNames}
 \title{cleanNames}
 \usage{
-cleanNames(df, cols, split, new.col.names, split.pattern, 
-lower, strip.punctuation)
+cleanNames(df, cols, split = FALSE, split.pattern = ",",
+  new.col.names = NULL, lower = TRUE, strip.punctuation = TRUE)
 }
 \arguments{
 \item{df}{Dataframe}
 
 \item{cols}{Vector of column names to clean}
 
-\item{split}{TRUE if at least one of the columns in cols needs to be split}
+\item{split}{if at least one of the columns in cols needs to be split}
+
+\item{split.pattern}{Vector of pattern to split on in order of columns to be split}
 
 \item{new.col.names}{Named list. Names are names of columns to be split, values are 
 vectors of new column names post split.}
 
-\item{split.pattern}{Vector of pattern to split on in order of columns to be split}
+\item{lower}{cols are lower-cased, if FALSE cols are returned with case as is}
 
-\item{lower}{if TRUE cols are lower-cased, if FALSE cols are returned with case as is}
-
-\item{strip.punctuation}{if TRUE punctuation is stripped from cols, if FALSE all 
+\item{strip.punctuation}{punctuation is stripped from cols, if FALSE all 
 puntuation is left as is}
 }
 \value{
@@ -33,21 +33,4 @@ Names can be standardized by converting all characters to lower case, splitting 
 columns into individual parts such as 'first' and 'last', and punctuation can be removed. 
 For blocking and linking on autoencoded name fields, it is recommended to split each part of 
 the name such as first, middle, and last, into separate columns.
-}
-\examples{
-# Create list of new column names for columns which will be split
-new.col.names <- list('names' = c('last', 'first'), 
-                      'mothers.names' = c('mothers.first', 'mothers.last'))
-
-# Return `df` with full.names split on comma into 'last' and 'first' 
-# Split `full.mothers.names` into 'first.m' and 'last.m' on space character
-# Lower case and strip punctuation from cols                        
-df.cleaned <- cleanNames(df, 
-                           cols = c('full.names', 'full.mothers.names', 'nicknames'), 
-                           split = TRUE, 
-                           split.pattern = c(',', ' '), 
-                           new.col.names = new.col.names,
-                           lower = TRUE, 
-                           strip.punctuation = TRUE)
-                           
 }

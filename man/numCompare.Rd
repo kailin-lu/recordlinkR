@@ -6,6 +6,14 @@
 \usage{
 numCompare(vec.A, vec.B)
 }
+\arguments{
+\item{vec.A}{exact vector from dfA}
+
+\item{vec.B}{exact vector from dfB}
+}
+\value{
+vector comparisons
+}
 \description{
 numCompare
 }

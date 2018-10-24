@@ -4,15 +4,11 @@
 \name{iowa_1915}
 \alias{iowa_1915}
 \title{Sample Iowa Census 1915}
-\format{Dataframe containing 6881 observations.
-\describe{
-\item{name}
-\item{birthyear}
-}}
+\format{Dataframe containing 6881 observations.}
 \usage{
 iowa_1915
 }
 \description{
-Subset of Iowa Census 1915
+Sample of records from the Iowa Census 1915
 }
 \keyword{datasets}

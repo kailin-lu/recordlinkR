@@ -9,6 +9,6 @@
 iowa_1940
 }
 \description{
-Subset of Iowa Census 1940
+Sample of records from the Iowa Census 1940
 }
 \keyword{datasets}

@@ -11,6 +11,8 @@ blockNumeric(dfA, dfB, n.cores, cols.numeric, numeric.range = 1)
 
 \item{dfB}{Dataframe to be linked to `dfA`}
 
+\item{n.cores}{Cores}
+
 \item{cols.numeric}{Named list}
 
 \item{numeric.range}{Window}

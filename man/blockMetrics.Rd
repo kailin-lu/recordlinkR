@@ -6,6 +6,15 @@
 \usage{
 blockMetrics(dfA, dfB, blocks, known.matches = NULL)
 }
+\arguments{
+\item{dfA}{dataframe A}
+
+\item{dfB}{dataframe B}
+
+\item{blocks}{Blocks}
+
+\item{known.matches}{indices}
+}
 \value{
 List of metrics
 }

@@ -6,8 +6,15 @@
 \usage{
 stringCompare(vec.A, vec.B, method = "jw")
 }
+\arguments{
+\item{vec.A}{exact vector from dfA}
+
+\item{vec.B}{exact vector from dfB}
+
+\item{method}{Jaro Winkler}
+}
 \value{
-dataframe
+dataframe difference
 }
 \description{
 stringCompare

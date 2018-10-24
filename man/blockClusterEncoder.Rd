@@ -12,6 +12,8 @@ blockClusterEncoder(encoded.A, encoded.B, n.cores, n.centers = 20,
 
 \item{encoded.B}{List of matrices from encoded columns in dfB}
 
+\item{n.cores}{Cores}
+
 \item{n.centers}{Number of clusters to use}
 
 \item{iter.max}{Maximum number of iterations}

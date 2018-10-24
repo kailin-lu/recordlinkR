@@ -8,6 +8,20 @@ plotNames(names, n.samples = 1000, encoder.model.path = NULL,
   title = "Sample of Names in Latent Space Plotted with t-SNE",
   text.size = 3, seed = 0)
 }
+\arguments{
+\item{names}{Vector of names}
+
+\item{n.samples}{Number of samples to do dimentionality reduction}
+
+\item{encoder.model.path}{Model path}
+
+\item{title}{Plot title}
+
+\item{text.size}{size of name labels}
+
+\item{seed}{random seed}
+}
 \description{
-plotNames
+Plots a sample of names in two dimensions using T-SNE to reduce dimensions from encoded 
+representations of names
 }

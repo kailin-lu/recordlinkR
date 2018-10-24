@@ -4,6 +4,25 @@
 #' 
 #' @param dfA dataframe 
 #' @param dfB dataframe
+#' @param train.indices train indicies 
+#' @param validation.split validation
+#' @param method classification method
+#' @param blocks block class 
+#' @param block.exact block exact columns 
+#' @param block.numeric block numeric cols
+#' @param block.numeric.range block numeric range
+#' @param block.encoder encoder block cols 
+#' @param block.encoder.model.path model path 
+#' @param block.encoder.method cluster or binary 
+#' @param comparisons comparisons matrix
+#' @param compare.string.encoder string encoder compare cols 
+#' @param compare.encoder.model.path  compare model path 
+#' @param compare.string.sim String similarity 
+#' @param string.sim.method Jaro Winkler
+#' @param compare.numeric numeric cols 
+#' @param compare.exact exact cols 
+#' @param n.cores number of cores to parallelize over
+#' @param seed set random seed 
 #' 
 #' @return list  
 #' @export
@@ -69,16 +88,16 @@ supervisedLink <- function(dfA, dfB, train.indices,
   
   
   if (method == 'all') {
-    model.log <- glm(match ~ ., data = comparisons.train, family = binomial())
-    model.svm  <- svm(match ~ ., data = comparisons.train)
+    model.log <- stats::glm(match ~ ., data = comparisons.train, family = stats::binomial())
+    model.svm  <- e1071::svm(match ~ ., data = comparisons.train)
     
   }
   else if (method == 'log') {
-    model <- glm(match ~ . , data = comparisons.train, family = binomial())
+    model <- stats::glm(match ~ . , data = comparisons.train, family = stats::binomial())
     summary(model)
   }
   else if (method == 'svm') {
-    model <- svm(match ~ ., data = comparisons.train)
+    model <- e1071::svm(match ~ ., data = comparisons.train)
   }
   else {
     cat('\nNo model type selected.')

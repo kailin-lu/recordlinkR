@@ -6,10 +6,6 @@ require(tensorflow)
 #' 
 #' Trains and saves a LSTM Variational Autoencoder 
 #' 
-#' @usage trainModel(namesA, namesB, dim.latent, dim.encode, dim.decode, 
-#' max.length, num.encode.layers, num.decode.layers, batch.size, epochs, 
-#' lr, validation.split, save.dir, earlystop, earlystop.patience, 
-#' tensorboard, tensorboard.runid, verbose)
 #' 
 #' @param namesA Character vector of names 
 #' @param namesB Character vector of names known to be matches of namesA. 
@@ -25,6 +21,9 @@ require(tensorflow)
 #' @param lr Learning rate of model. This model is configured to use to the Adam optimizer. 
 #' @param validation.split Percentage of data to save for validation 
 #' @param save.dir Directory to save the trained encoder
+#' @param reconstruct Whether or not show reconstructions 
+#' @param reconstruct.n How many reconstructions to show
+#' @param reconstruct.display After many epochs to show reconstructions
 #' @param earlystop TRUE if stopping early when validation loss is no longer decreasing,
 #'  if FALSE then train for all epochs 
 #' @param earlystop.patience Number of epochs to wait while validation loss does not
@@ -94,7 +93,7 @@ trainModel <- function(namesA,
   namesB <- recordlinkR::embedLetters(namesB, max.length)
   
   # Inputs 
-  inputs <- keras::layer_input(shape=c(max.length, length(recordlinkR:::letters_index)+1))
+  inputs <- keras::layer_input(shape=c(max.length, length(letters_index)+1))
   
   # Encoder 
   encoder <- inputs %>% keras::layer_lstm(units = dim.encode, 
@@ -149,7 +148,7 @@ trainModel <- function(namesA,
                                                name = paste('dec', i, sep = ''))
     }
   }
-  reconstruction <- decoder %>% keras::layer_dense(units = length(recordlinkR:::letters_index)+1,
+  reconstruction <- decoder %>% keras::layer_dense(units = length(letters_index)+1,
                                                    activation = 'softmax', 
                                                    name = 'reconstruction')
   

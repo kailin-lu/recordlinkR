@@ -2,6 +2,11 @@
 #' 
 #' Reports block metrics to assess quality of blocking. If known matches are null then 
 #' 
+#' @param dfA dataframe A 
+#' @param dfB dataframe B 
+#' @param blocks Blocks 
+#' @param known.matches indices 
+#' 
 #' @return List of metrics
 #' 
 #' @export
@@ -18,9 +23,9 @@ blockMetrics <- function(dfA, dfB, blocks, known.matches = NULL) {
   pairs.completeness <- NULL 
   
   if (!is.null(known.matches)) {
-    known.matches <- as.data.table(known.matches)
+    known.matches <- data.table::as.data.table(known.matches)
     colnames(known.matches) <- colnames(blocks)
-    found <- fintersect(known.matches, blocks)
+    found <- data.table::fintersect(known.matches, blocks)
     pairs.completeness <- nrow(found) /nrow(known.matches)
     cat('\nMatches Found: ', nrow(found))
     cat('\nPairs Completeness: ', round(pairs.completeness * 100,2), '%')

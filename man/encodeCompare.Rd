@@ -6,6 +6,16 @@
 \usage{
 encodeCompare(vec.A, vec.B, encoder.model.path = NULL)
 }
+\arguments{
+\item{vec.A}{exact vector from dfA}
+
+\item{vec.B}{exact vector from dfB}
+
+\item{encoder.model.path}{model path}
+}
+\value{
+vector comparisons
+}
 \description{
 encodeCompare
 }

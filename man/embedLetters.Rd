@@ -4,7 +4,7 @@
 \alias{embedLetters}
 \title{embedLetters}
 \usage{
-embedLetters(names, max.length)
+embedLetters(names, max.length = 12)
 }
 \arguments{
 \item{names}{Character vector}

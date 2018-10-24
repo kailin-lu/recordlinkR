@@ -1,22 +1,18 @@
 #' Sample Iowa Census 1915 
 #' 
-#' Subset of Iowa Census 1915 
+#' Sample of records from the Iowa Census 1915 
 #' 
 #' @name iowa_1915 
 #' @docType data 
 #' 
 #' @format Dataframe containing 6881 observations.
-#' \describe{
-#' \item{name}
-#' \item{birthyear}
-#' } 
 #' @keywords datasets
 "iowa_1915"
 
 
 #' Sample Iowa Census 1940 
 #' 
-#' Subset of Iowa Census 1940 
+#' Sample of records from the Iowa Census 1940
 #' 
 #' @name iowa_1940
 #' @docType data
@@ -32,6 +28,7 @@
 #' @docType data 
 #' 
 #' @format Dataframe with 4320 observations
+#' @keywords datasets
 "iowa_sample_matches"
 
 
@@ -44,18 +41,12 @@
 "iowa_true_matches"
 
 
-#' Iowa First Name 4-dim Encoder 
+#' Letters Index
 #' 
-#' @name encoder_iowa_first_4
-#' @docType Model 
-#' 
-#' @format Keras model 
-"encoder_iowa_first_4"
+#' @name letters_index
+#' @docType data 
+#'
+#' @format List of 27 
+"letters_index"
 
-#' Iowa First Name 512-dim Encoder 
-#' 
-#' @name encoder_iowa_first_512 
-#' @docType Modle 
-#' 
-#' @format Keras model 
-"encoder_iowa_first_512"
+# Save encoders 

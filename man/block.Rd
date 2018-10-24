@@ -4,12 +4,19 @@
 \alias{block}
 \title{block}
 \usage{
-block(dfA, dfB, cols.exact, cols.numeric, cols.encoder, 
-encoder.trainA, encoder.trainB,  encoder.block.method = 'binary', numeric.range, 
-model.path, dim.latent, dim.encode, dim.decode, max.length,
-num.encode.layers, num.decode.layers, batch.size, epochs, lr,
-validation.split, save.dir, earlystop, earlystop.patience, 
-tensorboard, tensorboard.runid)
+block(dfA, dfB, cols.exact = NULL, cols.numeric = NULL,
+  numeric.range = NULL, cols.encoder = NULL,
+  encoder.model.path = NULL, encoder.trainA = NULL,
+  encoder.trainB = NULL, encoder.block.method = "binary",
+  encoder.nclusters = 5, encoder.maxiter = 1000,
+  known.matches = NULL, dim.latent = 8, dim.encode = 64,
+  dim.decode = 64, max.length = 12, num.encode.layers = 2,
+  num.decode.layers = 2, batch.size = 32, epochs = 500, lr = 5e-04,
+  validation.split = 0.2, save.dir = "~/blocking_models/",
+  reconstruct = TRUE, reconstruct.n = 5, reconstruct.display = 20,
+  earlystop = FALSE, earlystop.patience = 10, tensorboard = FALSE,
+  tensorboard.runid = as.character(Sys.time()), verbose = 2,
+  n.cores = parallel::detectCores() - 1)
 }
 \arguments{
 \item{dfA}{Dataframe to be linked to \code{dfB}}
@@ -34,6 +41,8 @@ tensorboard, tensorboard.runid)
 
 \item{encoder.nclusters}{Number of cluster is encoding by cluster}
 
+\item{encoder.maxiter}{Max iterations in kmeans clustering}
+
 \item{known.matches}{Dataframe of known matches with first column having indices of matches 
 from dfA and second column having indices of known matches from dfB}
 
@@ -44,6 +53,41 @@ from dfA and second column having indices of known matches from dfB}
 \item{dim.decode}{Number of decoding dimensions}
 
 \item{max.length}{Maximum length of characters}
+
+\item{num.encode.layers}{Encode layers}
+
+\item{num.decode.layers}{Decoder layers}
+
+\item{batch.size}{Training batch size}
+
+\item{epochs}{Number of training epochs}
+
+\item{lr}{Learning rate}
+
+\item{validation.split}{Validation}
+
+\item{save.dir}{save directory path}
+
+\item{reconstruct}{Whether or not show reconstructions}
+
+\item{reconstruct.n}{How many reconstructions to show}
+
+\item{reconstruct.display}{After many epochs to show reconstructions}
+
+\item{earlystop}{TRUE if stopping early when validation loss is no longer decreasing,
+if FALSE then train for all epochs}
+
+\item{earlystop.patience}{Number of epochs to wait while validation loss does not
+decrease before stopping training early}
+
+\item{tensorboard}{TRUE if tensorboard metrics are to be recorded. 
+Logs are recorded in the /tmp/ directory}
+
+\item{tensorboard.runid}{Unique identifier for the run to separate tensorboard logs}
+
+\item{verbose}{Verbosity level for training output, 0 = silence, 1 = minimal, 2 = verboses}
+
+\item{n.cores}{cores to parallelize over}
 }
 \value{
 Nested list of blocks where each block is one encoding. 

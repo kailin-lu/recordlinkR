@@ -8,12 +8,6 @@ library(parallel)
 #' 
 #' Block data to reduce the number of comparisons needed for linkage
 #' 
-#' @usage block(dfA, dfB, cols.exact, cols.numeric, cols.encoder, 
-#' encoder.trainA, encoder.trainB,  encoder.block.method = 'binary', numeric.range, 
-#' model.path, dim.latent, dim.encode, dim.decode, max.length,
-#' num.encode.layers, num.decode.layers, batch.size, epochs, lr,
-#' validation.split, save.dir, earlystop, earlystop.patience, 
-#' tensorboard, tensorboard.runid)
 #' 
 #' @param dfA Dataframe to be linked to \code{dfB}
 #' @param dfB Dataframe to be linked to \code{dfA}, if doing deduplication this is \code{dfA}
@@ -26,13 +20,32 @@ library(parallel)
 #' @param encoder.trainB Vector of matching names to train
 #' @param encoder.block.method binary or cluster
 #' @param encoder.nclusters Number of cluster is encoding by cluster 
+#' @param encoder.maxiter Max iterations in kmeans clustering
 #' @param known.matches Dataframe of known matches with first column having indices of matches 
 #' from dfA and second column having indices of known matches from dfB
 #' @param dim.latent Number of latent dimensions
 #' @param dim.encode Number of encoding dimensions
 #' @param dim.decode Number of decoding dimensions
 #' @param max.length Maximum length of characters 
-#'
+#' @param num.encode.layers Encode layers
+#' @param num.decode.layers Decoder layers
+#' @param batch.size Training batch size 
+#' @param epochs Number of training epochs
+#' @param lr Learning rate
+#' @param validation.split Validation 
+#' @param save.dir save directory path 
+#' @param reconstruct Whether or not show reconstructions 
+#' @param reconstruct.n How many reconstructions to show
+#' @param reconstruct.display After many epochs to show reconstructions
+#' @param earlystop TRUE if stopping early when validation loss is no longer decreasing,
+#'  if FALSE then train for all epochs 
+#' @param earlystop.patience Number of epochs to wait while validation loss does not
+#'  decrease before stopping training early 
+#' @param tensorboard TRUE if tensorboard metrics are to be recorded. 
+#' Logs are recorded in the /tmp/ directory
+#' @param tensorboard.runid Unique identifier for the run to separate tensorboard logs
+#' @param verbose Verbosity level for training output, 0 = silence, 1 = minimal, 2 = verboses
+#' @param n.cores cores to parallelize over
 #' 
 #' @return Nested list of blocks where each block is one encoding. 
 #' Sub-lists are of indices of namesA and namesB belonging to each block
@@ -160,7 +173,7 @@ block <- function(dfA, dfB,
   }
   
   start.time <- Sys.time() 
-  blocks <- Reduce(fintersect, blocks)
+  blocks <- Reduce(data.table::fintersect, blocks)
   
   cat('\nBlocks combined in ', difftime(Sys.time(), start.time, units = 'secs'), 'seconds.')
   block.metrics <- recordlinkR::blockMetrics(dfA, dfB, blocks, known.matches = known.matches)
@@ -197,6 +210,7 @@ getIndex <- function(x, vector) {
 #' @param dfA Dataframe to be linked to `dfB`
 #' @param dfB Dataframe to be linked to `dfA`
 #' @param cols.exact List with columns in dfA to be exactly matched to columns in dfB
+#' @param n.cores cores
 #' 
 #' @return Nested list where each list corresponds to one column in cols.exact. Each sublist 
 #' contains a vector of indices named `A` and a vector of indices named `B` for indices in `dfA`
@@ -217,12 +231,12 @@ blockExact <- function(dfA, dfB, cols.exact, n.cores) {
     keys <- intersect(unique(A[,i]), unique(B[,i]))
     idx.A <- sapply(keys, getIndex, vector = A[,i], USE.NAMES = T)
     idx.B <- sapply(keys, getIndex, vector = B[,i], USE.NAMES = T)
-    rbindlist(parallel::mclapply(keys, function(key) {data.table::CJ(idx.A[[key]], idx.B[[key]])}, mc.cores = n.cores))
+    data.table::rbindlist(parallel::mclapply(keys, function(key) {data.table::CJ(idx.A[[key]], idx.B[[key]])}, mc.cores = n.cores))
   }
   exact.blocks <- lapply(1:length(colnames(A)), colBlock)
 
   cat('\nExact blocks created in', difftime(Sys.time(), start.time, units = 'secs'), 'seconds.')
-  exact.blocks <- Reduce(intersect, exact.blocks)
+  exact.blocks <- Reduce(data.table::fintersect, exact.blocks)
 }
 
 
@@ -230,6 +244,7 @@ blockExact <- function(dfA, dfB, cols.exact, n.cores) {
 #' 
 #' @param dfA Dataframe to be linked to `dfB`
 #' @param dfB Dataframe to be linked to `dfA`
+#' @param n.cores Cores
 #' @param cols.numeric Named list
 #' @param numeric.range Window 
 #' 
@@ -261,16 +276,46 @@ blockNumeric <- function(dfA, dfB, n.cores,
         data.table::CJ(idx.A[[key]], idx.B[[key]])
         }
     }
-    numeric.blocks[[i]] <- rbindlist(mclapply(keys, matchNumericKeys, mc.cores = n.cores))
+    numeric.blocks[[i]] <- data.table::rbindlist(parallel::mclapply(keys, matchNumericKeys, mc.cores = n.cores))
   }
   cat('\nNumeric blocks created in', difftime(Sys.time(), start.time, units = 'secs'), 'seconds.') 
-  numeric.blocks <- Reduce(intersect, numeric.blocks)
+  numeric.blocks <- Reduce(data.table::fintersect, numeric.blocks)
   return(numeric.blocks)
 }
 
 #' encode
 #' 
 #' Adds encoded columns to dataframes to be linked 
+#' 
+#' @param dfA DataframeA 
+#' @param dfB DataframeB
+#' @param cols.encoder Encoder cols 
+#' @param encoder.model.path Model path if no train
+#' @param encoder.trainA trainA 
+#' @param encoder.trainB trainB
+#' @param dim.latent Dim latent
+#' @param dim.encode Dim encode 
+#' @param dim.decode Dim decode 
+#' @param max.length Max length 
+#' @param num.encode.layers encode layers 
+#' @param num.decode.layers decode layers 
+#' @param batch.size batch size 
+#' @param epochs Epochs 
+#' @param lr Learning rate
+#' @param validation.split validation split
+#' @param save.dir Save directory 
+#' @param reconstruct reconstruct 
+#' @param reconstruct.n How many reconstructions to show
+#' @param reconstruct.display After many epochs to show reconstructions
+#' @param earlystop TRUE if stopping early when validation loss is no longer decreasing,
+#'  if FALSE then train for all epochs 
+#' @param earlystop.patience Number of epochs to wait while validation loss does not
+#'  decrease before stopping training early 
+#' @param tensorboard TRUE if tensorboard metrics are to be recorded. 
+#' Logs are recorded in the /tmp/ directory
+#' @param tensorboard.runid Unique identifier for the run to separate tensorboard logs
+#' @param verbose Verbosity level for training output, 0 = silence, 1 = minimal, 2 = verboses
+#' 
 #' @export
 encode <- function(dfA, dfB, cols.encoder,
                    encoder.model.path = NULL,
@@ -329,8 +374,8 @@ encode <- function(dfA, dfB, cols.encoder,
     embedded.namesB <- recordlinkR::embedLetters(namesB, max.length = max.length)
     
     # Encode names to be matched
-    encoded.A <- encoder %>% predict(embedded.namesA)
-    encoded.B <- encoder %>% predict(embedded.namesB)
+    encoded.A <- encoder %>% stats::predict(embedded.namesA)
+    encoded.B <- encoder %>% stats::predict(embedded.namesB)
 
     encoded.cols.A[[i]] <- encoded.A
     encoded.cols.B[[i]] <- encoded.B
@@ -358,6 +403,7 @@ encode <- function(dfA, dfB, cols.encoder,
 #' 
 #' @param encoded.A List of matrices from encoded columns in dfA
 #' @param encoded.B List of matrices from encoded columns in dfB
+#' @param n.cores Cores 
 #' @param n.centers Number of clusters to use
 #' @param iter.max Maximum number of iterations
 #' 
@@ -369,7 +415,7 @@ blockClusterEncoder <- function(encoded.A, encoded.B,
   
   for (i in 1:length(encoded.A)) {
     combined <- rbind(encoded.A[[i]], encoded.B[[i]])
-    cluster.vec <- kmeans(combined, centers = n.centers, iter.max = iter.max)$cl
+    cluster.vec <- stats::kmeans(combined, centers = n.centers, iter.max = iter.max)$cl
 
     vec.A <- cluster.vec[1:dim(encoded.A[[i]])[1]]
     vec.B <- cluster.vec[(dim(encoded.A[[i]])[1])+1:length(cluster.vec)]
@@ -380,9 +426,9 @@ blockClusterEncoder <- function(encoded.A, encoded.B,
       data.table::CJ(c(which(vec.A %in% cluster)), c(which(vec.B %in% cluster)))
     }
       
-    cluster.blocks[[i]] <- rbindlist(mclapply(clusters, clusterIndex, mc.cores = n.cores))
+    cluster.blocks[[i]] <- data.table::rbindlist(parallel::mclapply(clusters, clusterIndex, mc.cores = n.cores))
   }
-  cluster.blocks <- Reduce(intersect, cluster.blocks)
+  cluster.blocks <- Reduce(data.table::fintersect, cluster.blocks)
   cat('\nCluster Encoder blocks created in', difftime(Sys.time(), start.time, units = 'secs'), 'seconds.') 
   return(cluster.blocks)
 }
@@ -390,10 +436,10 @@ blockClusterEncoder <- function(encoded.A, encoded.B,
 
 #' blockBinaryEncoder
 #' 
-#' Block on binary
 #' 
 #' @param encoded.A Matrix of encoded values
 #' @param encoded.B Matrix of encoded values 
+#' @param n.cores Number of cores to parallelize
 #' 
 #' @return List 
 #' @export
@@ -403,7 +449,7 @@ blockBinaryEncoder <- function(encoded.A, encoded.B, n.cores) {
   encoder.blocks <- vector(mode = 'list', length = length(encoded.A))
   
   for (i in 1:length(encoded.A)) {
-    med <- apply(encoded.A[[i]], 2, median)
+    med <- apply(encoded.A[[i]], 2, stats::median)
     cat('  Median mu set with dimension', length(med))
     
     # Function to binarize using median 
@@ -423,7 +469,7 @@ blockBinaryEncoder <- function(encoded.A, encoded.B, n.cores) {
     encIndex <- function(enc) {
       data.table::CJ(c(which(stringified.A %in% enc)), c(which(stringified.B %in% enc)))
     }
-    encoder.blocks[[i]] <- rbindlist(mclapply(unique.stringified.A, encIndex, mc.cores = n.cores))
+    encoder.blocks[[i]] <- data.table::rbindlist(parallel::mclapply(unique.stringified.A, encIndex, mc.cores = n.cores))
     
   }
   encoder.blocks <- Reduce(intersect, encoder.blocks)

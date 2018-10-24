@@ -6,11 +6,32 @@
 \usage{
 compare(dfA, dfB, blocks, compare.string.encoder = NULL,
   encoder.model.path = NULL, compare.string.sim = NULL,
-  string.sim.method = "jw", compare.numeric = NULL, compare.exact = NULL,
-  n.cores = detectCores() - 1)
+  string.sim.method = "jw", compare.numeric = NULL,
+  compare.exact = NULL, n.cores = parallel::detectCores() - 1)
+}
+\arguments{
+\item{dfA}{datafarme}
+
+\item{dfB}{dataframe}
+
+\item{blocks}{block indices}
+
+\item{compare.string.encoder}{string encoder cols}
+
+\item{encoder.model.path}{Path to encoder model}
+
+\item{compare.string.sim}{string similiarity cols}
+
+\item{string.sim.method}{Jaro Winkler vs. cosine}
+
+\item{compare.numeric}{numeric compare field}
+
+\item{compare.exact}{exact compare field}
+
+\item{n.cores}{Cores to parallelize over}
 }
 \value{
-List
+List comparison matrix
 }
 \description{
 Generate comparison matrix for pairs of records
