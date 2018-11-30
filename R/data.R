@@ -21,13 +21,21 @@
 #' @keywords datasets
 "iowa_1940"
 
+#' Iowa Census Training 
+#' 
+#' @name iowa_training_data
+#' @docType data 
+#' 
+#' @format Dataframe 
+#' @keyswords datasets 
+"iowa_training_data"
 
 #' Iowa Census Sample Matches 
 #' 
 #' @name iowa_sample_matches 
 #' @docType data 
 #' 
-#' @format Dataframe with 4320 observations
+#' @format Dataframe with 1000 observations
 #' @keywords datasets
 "iowa_sample_matches"
 
@@ -37,7 +45,7 @@
 #' @name iowa_true_matches 
 #' @docType data 
 #' 
-#' @format Dataframe with 1000 observations 
+#' @format Dataframe with 4320 observations 
 "iowa_true_matches"
 
 
@@ -49,4 +57,22 @@
 #' @format List of 27 
 "letters_index"
 
-# Save encoders 
+
+#' Encoder Model Iowa First Names 4 dim
+#' 
+#' @name encoder_iowa_first_4
+#' @docType data 
+#' 
+#' @format RAW 
+#' @keywords Keras encoder model 
+"encoder_iowa_first_4"
+
+
+#' Encoder Model Iowa First Names 256 dim
+#' 
+#' @name encoder_iowa_first_256
+#' @docType data 
+#' 
+#' @format RAW 
+#' @keywords Keras encoder model 
+"encoder_iowa_first_256"

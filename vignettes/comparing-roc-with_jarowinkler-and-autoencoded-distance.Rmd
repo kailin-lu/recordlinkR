@@ -1,0 +1,599 @@
+---
+title: "Compar"
+author: "Kaiiln Lu"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r}
+library(recordlinkR)
+library(stringdist)
+library(keras)
+library(pROC)
+library(ggplot2)
+```
+
+
+```{r}
+data(iowa_sample)
+```
+
+
+Jaro-Winkler distance is calculated using the stringdist library. Autoencoder distance is the vector of the consine between each encoded pair, normalized to 0-1. Encoded vectors values can be either left as is or binarized. 
+
+```{r}
+calculate_jw <- function(vec1, vec2) {
+  vec1 <- as.character(vec1)
+  vec2 <- as.character(vec2)
+  jw <- vector(mode='list', length=length(vec1))
+  for (i in 1:length(vec1)) {
+    jw[i] <- 1 - stringdist::stringdist(vec1[i], vec2[i], method='jw')
+  }
+  return (as.numeric(jw))
+}
+
+normalize <- function(vec) {
+  max.val <- max(vec)
+  min.val <- min(vec)
+  return ((vec-min.val) / (max.val-min.val))
+}
+
+autoencoder_dist <- function(mat1, mat2) {
+  ae <- vector(mode='list', length=dim(mat1)[1])
+  for (i in 1:dim(mat1)[1]) {
+    ae[i] <- mat1[i,] %*% mat2[i,]
+  }
+  return(normalize(as.numeric(ae)))
+}
+
+```
+
+Calculating distance measures on the Iowa last name. 
+
+```{r}
+iowa_training_data$jw_lname <-calculate_jw(iowa_training_data$lname1915,
+                                           iowa_training_data$lname1940)
+```
+
+
+Load encoder models and encode. 
+
+```{r}
+data("encoder_iowa_last_2")
+encoder_iowa_last_2 <- unserialize_model(encoder_iowa_last_2)
+
+lname1915_enc_2 <- encodeVector(iowa_training_data$lname1915, encoder_iowa_last_2)
+lname1940_enc_2 <- encodeVector(iowa_training_data$lname1940, encoder_iowa_last_2)
+
+data("encoder_iowa_last_4")
+encoder_iowa_last_4 <- unserialize_model(encoder_iowa_last_4)
+
+lname1915_enc_4 <- encodeVector(iowa_training_data$lname1915, encoder_iowa_last_4)
+lname1940_enc_4 <- encodeVector(iowa_training_data$lname1940, encoder_iowa_last_4)
+
+data("encoder_iowa_last_8")
+encoder_iowa_last_8 <- unserialize_model(encoder_iowa_last_8)
+
+lname1915_enc_8 <- encodeVector(iowa_training_data$lname1915, encoder_iowa_last_8)
+lname1940_enc_8 <- encodeVector(iowa_training_data$lname1940, encoder_iowa_last_8)
+
+data("encoder_iowa_last_24")
+encoder_iowa_last_24 <- unserialize_model(encoder_iowa_last_24)
+
+lname1915_enc_24 <- encodeVector(iowa_training_data$lname1915, encoder_iowa_last_24)
+lname1940_enc_24 <- encodeVector(iowa_training_data$lname1940, encoder_iowa_last_24)
+
+data("encoder_iowa_last_48")
+encoder_iowa_last_48 <- unserialize_model(encoder_iowa_last_48)
+
+lname1915_enc_48 <- encodeVector(iowa_training_data$lname1915, encoder_iowa_last_48)
+lname1940_enc_48 <- encodeVector(iowa_training_data$lname1940, encoder_iowa_last_48)
+
+data("encoder_iowa_last_96")
+encoder_iowa_last_96 <- unserialize_model(encoder_iowa_last_96)
+
+lname1915_enc_96 <- encodeVector(iowa_training_data$lname1915, encoder_iowa_last_96)
+lname1940_enc_96 <- encodeVector(iowa_training_data$lname1940, encoder_iowa_last_96)
+
+data("encoder_iowa_last_384")
+encoder_iowa_last_384 <- unserialize_model(encoder_iowa_last_384)
+
+lname1915_enc_384 <- encodeVector(iowa_training_data$lname1915, encoder_iowa_last_384)
+lname1940_enc_384 <- encodeVector(iowa_training_data$lname1940, encoder_iowa_last_384)
+```
+
+Calculate autoencoder distances without binarization. 
+
+```{r}
+iowa_training_data$lname_enc_2 <- autoencoder_dist(lname1915_enc_2, 
+                                                    lname1940_enc_2)
+
+iowa_training_data$lname_enc_4 <- autoencoder_dist(lname1915_enc_4, 
+                                                    lname1940_enc_4)
+
+iowa_training_data$lname_enc_8 <- autoencoder_dist(lname1915_enc_8, 
+                                                    lname1940_enc_8)
+
+iowa_training_data$lname_enc_24 <- autoencoder_dist(lname1915_enc_24, 
+                                                    lname1940_enc_24)
+
+iowa_training_data$lname_enc_48 <- autoencoder_dist(lname1915_enc_48, 
+                                                    lname1940_enc_48)
+
+iowa_training_data$lname_enc_96 <- autoencoder_dist(lname1915_enc_48, 
+                                                    lname1940_enc_48)
+
+iowa_training_data$lname_enc_384 <- autoencoder_dist(lname1915_enc_48, 
+                                                    lname1940_enc_48)
+```
+
+
+Calculate ROC and AUC for JW and 
+```{r}
+roc_lname_jw <- roc(iowa_training_data$match, iowa_training_data$jw_lname)
+paste('jw AUC =', round(auc(roc_lname_jw),4)) 
+
+roc_lname_enc_2 <- roc(iowa_training_data$match, iowa_training_data$lname_enc_2)
+paste('LSTM 2 AUC =', round(auc(roc_lname_enc_2),4)) 
+
+roc_lname_enc_4 <- roc(iowa_training_data$match, iowa_training_data$lname_enc_4) 
+paste('LSTM 4 AUC =', round(auc(roc_lname_enc_4),4))
+
+roc_lname_enc_8 <- roc(iowa_training_data$match, iowa_training_data$lname_enc_8) 
+paste('LSTM 8 AUC =', round(auc(roc_lname_enc_8),4)) 
+
+roc_lname_enc_24 <- roc(iowa_training_data$match, iowa_training_data$lname_enc_24) 
+paste('LSTM 24 AUC =', round(auc(roc_lname_enc_24),4)) 
+
+roc_lname_enc_48 <- roc(iowa_training_data$match, iowa_training_data$lname_enc_48) 
+paste('LSTM 48 AUC =', round(auc(roc_lname_enc_48),4)) 
+
+roc_lname_enc_96 <- roc(iowa_training_data$match, iowa_training_data$lname_enc_96) 
+paste('LSTM 96 AUC =', round(auc(roc_lname_enc_96),4)) 
+
+roc_lname_enc_384 <- roc(iowa_training_data$match, iowa_training_data$lname_enc_384) 
+paste('LSTM 384 AUC =', round(auc(roc_lname_enc_384),4))
+```
+
+
+```{r}
+g <- ggroc(list('jw AUC=.8961'=roc_lname_jw, 
+                'enc002 AUC=.7413'=roc_lname_enc_2, 
+                'enc004 AUC=.7211'=roc_lname_enc_4, 
+                'enc008 AUC=.6778'=roc_lname_enc_8, 
+                'enc024 AUC=.7504'=roc_lname_enc_24, 
+                'enc048 AUC=.8363'=roc_lname_enc_48, 
+                'enc096 AUC=.8363'=roc_lname_enc_96, 
+                'enc384 AUC=.8363'=roc_lname_enc_384))
+
+g + ggtitle('Iowa Last Name - Vector Distance')
+```
+
+
+Calculate autoencoder distance binarized. 
+
+To binarize, compare each encoded vector to the median of all encoded vectors from one columns. In this case, the median is calculated using the 1915 last name. 
+
+```{r}
+lname1915_enc_2_list <- binarizeVector(lname1915_enc_2)
+lname1915_enc_2_b <- lname1915_enc_2_list[[1]]
+lname1940_enc_2_b <- binarizeVector(lname1940_enc_2, lname1915_enc_2_list[[2]])[[1]]
+
+iowa_training_data$lname_enc_2_b <- autoencoder_dist(lname1915_enc_2_b, 
+                                                    lname1940_enc_2_b)
+
+lname1915_enc_4_list <- binarizeVector(lname1915_enc_4)
+lname1915_enc_4_b <- lname1915_enc_4_list[[1]]
+lname1940_enc_4_b <- binarizeVector(lname1940_enc_4, lname1915_enc_4_list[[2]])[[1]]
+
+iowa_training_data$lname_enc_4_b <- autoencoder_dist(lname1915_enc_4_b, 
+                                                    lname1940_enc_4_b)
+
+lname1915_enc_8_list <- binarizeVector(lname1915_enc_8)
+lname1915_enc_8_b <- lname1915_enc_8_list[[1]]
+lname1940_enc_8_b <- binarizeVector(lname1940_enc_8, lname1915_enc_8_list[[2]])[[1]]
+
+iowa_training_data$lname_enc_8_b <- autoencoder_dist(lname1915_enc_8_b, 
+                                                    lname1940_enc_8_b)
+
+lname1915_enc_8_list <- binarizeVector(lname1915_enc_8)
+lname1915_enc_8_b <- lname1915_enc_8_list[[1]]
+lname1940_enc_8_b <- binarizeVector(lname1940_enc_8, lname1915_enc_8_list[[2]])[[1]]
+
+iowa_training_data$lname_enc_8_b <- autoencoder_dist(lname1915_enc_8_b, 
+                                                    lname1940_enc_8_b)
+
+lname1915_enc_24_list <- binarizeVector(lname1915_enc_24)
+lname1915_enc_24_b <- lname1915_enc_24_list[[1]]
+lname1940_enc_24_b <- binarizeVector(lname1940_enc_24, lname1915_enc_24_list[[2]])[[1]]
+
+iowa_training_data$lname_enc_24_b <- autoencoder_dist(lname1915_enc_24_b, 
+                                                    lname1940_enc_24_b)
+
+lname1915_enc_48_list <- binarizeVector(lname1915_enc_48)
+lname1915_enc_48_b <- lname1915_enc_48_list[[1]]
+lname1940_enc_48_b <- binarizeVector(lname1940_enc_48, lname1915_enc_48_list[[2]])[[1]]
+
+iowa_training_data$lname_enc_48_b <- autoencoder_dist(lname1915_enc_48_b, 
+                                                    lname1940_enc_48_b)
+
+
+lname1915_enc_96_list <- binarizeVector(lname1915_enc_96)
+lname1915_enc_96_b <- lname1915_enc_96_list[[1]]
+lname1940_enc_96_b <- binarizeVector(lname1940_enc_96, lname1915_enc_96_list[[2]])[[1]]
+
+iowa_training_data$lname_enc_96_b <- autoencoder_dist(lname1915_enc_96_b, 
+                                                    lname1940_enc_96_b)
+
+lname1915_enc_384_list <- binarizeVector(lname1915_enc_384)
+lname1915_enc_384_b <- lname1915_enc_384_list[[1]]
+lname1940_enc_384_b <- binarizeVector(lname1940_enc_384, lname1915_enc_384_list[[2]])[[1]]
+
+iowa_training_data$lname_enc_384_b <- autoencoder_dist(lname1915_enc_384_b, 
+                                                    lname1940_enc_384_b)
+```
+
+```{r}
+roc_lname_enc_2 <- roc(iowa_training_data$match,
+                       iowa_training_data$lname_enc_2_b)
+paste('LSTM 2 AUC =', round(auc(roc_lname_enc_2),4)) 
+
+roc_lname_enc_4 <- roc(iowa_training_data$match, 
+                       iowa_training_data$lname_enc_4_b) 
+paste('LSTM 4 AUC =', round(auc(roc_lname_enc_4),4))
+
+roc_lname_enc_8 <- roc(iowa_training_data$match,
+                       iowa_training_data$lname_enc_8_b) 
+paste('LSTM 8 AUC =', round(auc(roc_lname_enc_8),4)) 
+
+roc_lname_enc_24 <- roc(iowa_training_data$match,
+                        iowa_training_data$lname_enc_24_b) 
+paste('LSTM 24 AUC =', round(auc(roc_lname_enc_24),4)) 
+
+roc_lname_enc_48 <- roc(iowa_training_data$match,
+                        iowa_training_data$lname_enc_48_b) 
+paste('LSTM 48 AUC =', round(auc(roc_lname_enc_48),4)) 
+
+roc_lname_enc_96 <- roc(iowa_training_data$match, 
+                        iowa_training_data$lname_enc_96_b) 
+paste('LSTM 96 AUC =', round(auc(roc_lname_enc_96),4)) 
+
+roc_lname_enc_384 <- roc(iowa_training_data$match,
+                         iowa_training_data$lname_enc_384_b) 
+paste('LSTM 384 AUC =', round(auc(roc_lname_enc_384),4))
+```
+
+
+```{r}
+g <- ggroc(list('jw AUC=.8961'=roc_lname_jw, 
+                'enc002 AUC=.6343'=roc_lname_enc_2, 
+                'enc004 AUC=.6741'=roc_lname_enc_4, 
+                'enc008 AUC=.7193'=roc_lname_enc_8, 
+                'enc024 AUC=.8111'=roc_lname_enc_24, 
+                'enc048 AUC=.8699'=roc_lname_enc_48, 
+                'enc096 AUC=.8813'=roc_lname_enc_96, 
+                'enc384 AUC=.9078'=roc_lname_enc_384))
+
+g + ggtitle('Iowa Last Name - Binarized Vector Distance')
+
+```
+
+Jaro Winkler and Binary LSTM vector distance can be combined by taking a product. 
+
+```{r}
+iowa_training_data$lname_jw_enc_2 <- iowa_training_data$lname_enc_2 * iowa_training_data$jw_lname
+
+iowa_training_data$lname_jw_enc_4 <- iowa_training_data$lname_enc_4 * iowa_training_data$jw_lname
+
+iowa_training_data$lname_jw_enc_8 <- iowa_training_data$lname_enc_8 * iowa_training_data$jw_lname
+
+iowa_training_data$lname_jw_enc_24 <- iowa_training_data$lname_enc_24 * iowa_training_data$jw_lname
+
+iowa_training_data$lname_jw_enc_48 <- iowa_training_data$lname_enc_48 * iowa_training_data$jw_lname
+
+iowa_training_data$lname_jw_enc_96 <- iowa_training_data$lname_enc_96 * iowa_training_data$jw_lname
+
+iowa_training_data$lname_jw_enc_384 <- iowa_training_data$lname_enc_384 * iowa_training_data$jw_lname
+```
+
+
+```{r}
+roc_lname_enc_2 <- roc(iowa_training_data$match,
+                       iowa_training_data$lname_jw_enc_2)
+paste('LSTM 2 AUC =', round(auc(roc_lname_enc_2),4)) 
+
+roc_lname_enc_4 <- roc(iowa_training_data$match, 
+                       iowa_training_data$lname_jw_enc_4) 
+paste('LSTM 4 AUC =', round(auc(roc_lname_enc_4),4))
+
+roc_lname_enc_8 <- roc(iowa_training_data$match,
+                       iowa_training_data$lname_jw_enc_8) 
+paste('LSTM 8 AUC =', round(auc(roc_lname_enc_8),4)) 
+
+roc_lname_enc_24 <- roc(iowa_training_data$match,
+                        iowa_training_data$lname_jw_enc_24) 
+paste('LSTM 24 AUC =', round(auc(roc_lname_enc_24),4)) 
+
+roc_lname_enc_48 <- roc(iowa_training_data$match,
+                        iowa_training_data$lname_jw_enc_48) 
+paste('LSTM 48 AUC =', round(auc(roc_lname_enc_48),4)) 
+
+roc_lname_enc_96 <- roc(iowa_training_data$match, 
+                        iowa_training_data$lname_jw_enc_96) 
+paste('LSTM 96 AUC =', round(auc(roc_lname_enc_96),4)) 
+
+roc_lname_enc_384 <- roc(iowa_training_data$match,
+                         iowa_training_data$lname_jw_enc_384) 
+paste('LSTM 384 AUC =', round(auc(roc_lname_enc_384),4))
+```
+
+# Blocking 
+
+```{r}
+cols.encoder <- list('A'='lname1915', 'B'='lname1940')
+
+blocks <- block(iowa_1915, iowa_1940, 
+                cols.encoder=cols.encoder, 
+                encoder.model.path=encoder_iowa_last_2, 
+                encoder.block.method = 'cluster', 
+                encoder.nclusters = 10,
+                n.cores = 1, 
+                known.matches = iowa_true_matches[,1:2])
+```
+
+```{r}
+blocks <- block(iowa_1915, iowa_1940, 
+                cols.encoder=cols.encoder, 
+                encoder.model.path=encoder_iowa_last_4, 
+                encoder.block.method = 'cluster', 
+                encoder.nclusters = 10,
+                n.cores = 1, 
+                known.matches = iowa_true_matches[,1:2])
+```
+
+
+```{r}
+blocks <- block(iowa_1915, iowa_1940, 
+                cols.encoder=cols.encoder, 
+                encoder.model.path=encoder_iowa_last_8, 
+                encoder.block.method = 'cluster', 
+                encoder.nclusters = 10,
+                n.cores = 1, 
+                known.matches = iowa_true_matches[,1:2])
+```
+
+
+```{r}
+blocks <- block(iowa_1915, iowa_1940, 
+                cols.encoder=cols.encoder, 
+                encoder.model.path=encoder_iowa_last_24, 
+                encoder.block.method = 'cluster', 
+                encoder.nclusters = 10,
+                n.cores = 1, 
+                known.matches = iowa_true_matches[,1:2])
+```
+
+
+```{r}
+blocks <- block(iowa_1915, iowa_1940, 
+                cols.encoder=cols.encoder, 
+                encoder.model.path=encoder_iowa_last_48, 
+                encoder.block.method = 'cluster', 
+                encoder.nclusters = 10,
+                n.cores = 1, 
+                known.matches = iowa_true_matches[,1:2])
+```
+
+
+```{r}
+blocks <- block(iowa_1915, iowa_1940, 
+                cols.encoder=cols.encoder, 
+                encoder.model.path=encoder_iowa_last_96, 
+                encoder.block.method = 'cluster', 
+                encoder.nclusters = 10,
+                n.cores = 1, 
+                known.matches = iowa_true_matches[,1:2])
+```
+
+```{r}
+cluster_blocks <- data.frame(dim.latent=c("2", "4", "8", "24", "48", "96"), 
+                             proportion.comparisons=c(14.34, 15.51, 11.37, 11.36, 10.36 ,11.14), 
+                             pairs.completeness=c(85.02, 85.39, 86.71, 90.90, 90.51, 90.16))
+cluster_blocks$dim.latent <- factor(cluster_blocks$dim.latent, levels=cluster_blocks$dim.latent)
+
+g <- ggplot(data=cluster_blocks, aes(x=dim.latent, y=proportion.comparisons)) + 
+  geom_bar(stat='identity') +
+  geom_text(aes(label=proportion.comparisons), vjust=1.6, color="white", size=3.5)+
+  ggtitle('Proportion of Comparisons After Blocking on Encoded Clusters (n.clusters=10)') + 
+  theme_minimal() 
+g
+```
+
+```{r}
+g <- ggplot(data=cluster_blocks, aes(x=dim.latent, y=pairs.completeness)) + 
+  geom_bar(stat='identity') +
+  geom_text(aes(label=pairs.completeness), vjust=1.6, color="white", size=3.5)+
+  ggtitle('Pairs Completeness After Blocking on Encoded Clusters (n.clusters=10)') + 
+  theme_minimal() 
+g
+```
+
+
+Blocking using 96 dim model, different number of clusters. 
+
+```{r}
+blocks <- block(iowa_1915, iowa_1940, 
+                cols.encoder=cols.encoder, 
+                encoder.model.path=encoder_iowa_last_96, 
+                encoder.block.method = 'cluster', 
+                encoder.nclusters = 2,
+                n.cores = 1, 
+                known.matches = iowa_true_matches[,1:2])
+```
+
+
+```{r}
+blocks <- block(iowa_1915, iowa_1940, 
+                cols.encoder=cols.encoder, 
+                encoder.model.path=encoder_iowa_last_96, 
+                encoder.block.method = 'cluster', 
+                encoder.nclusters = 4,
+                n.cores = 1, 
+                known.matches = iowa_true_matches[,1:2])
+```
+
+```{r}
+blocks <- block(iowa_1915, iowa_1940, 
+                cols.encoder=cols.encoder, 
+                encoder.model.path=encoder_iowa_last_96, 
+                encoder.block.method = 'cluster', 
+                encoder.nclusters = 6,
+                n.cores = 1, 
+                known.matches = iowa_true_matches[,1:2])
+```
+
+```{r}
+blocks <- block(iowa_1915, iowa_1940, 
+                cols.encoder=cols.encoder, 
+                encoder.model.path=encoder_iowa_last_96, 
+                encoder.block.method = 'cluster', 
+                encoder.nclusters = 8,
+                n.cores = 1, 
+                known.matches = iowa_true_matches[,1:2])
+```
+
+```{r}
+cluster_blocks_96 <- data.frame(n.clusters=c("2", "4", "6", "8", "10"), 
+                             proportion.comparisons=c(59.76, 28.33, 17.28, 13.44, 11.14), 
+                             pairs.completeness=c(96.2, 93.08, 91.04, 90.65, 90.16))
+
+cluster_blocks_96$n.clusters <- factor(cluster_blocks_96$n.clusters, levels=cluster_blocks_96$n.clusters)
+
+g <- ggplot(data=cluster_blocks_96, aes(x=n.clusters, y=proportion.comparisons)) + 
+  geom_bar(stat='identity') +
+  geom_text(aes(label=proportion.comparisons), vjust=1.6, color="white", size=3.5)+
+  ggtitle('Proportion of Comparisons After Blocking on \n Clustered Encoded Vecs (dim.latent=96)') + 
+  theme_minimal() 
+g
+```
+
+```{r}
+g <- ggplot(data=cluster_blocks_96, aes(x=n.clusters, y=pairs.completeness)) + 
+  geom_bar(stat='identity') +
+  geom_text(aes(label=pairs.completeness), vjust=1.6, color="white", size=3.5)+
+  ggtitle('Pairs Completeness After Blocking on \n Clustered Encoded Vecs (dim.latent=96)') + 
+  theme_minimal() 
+g
+```
+
+
+Blocking on binary. 
+
+```{r}
+blocks <- block(iowa_1915, iowa_1940, 
+                cols.encoder=cols.encoder, 
+                encoder.model.path=encoder_iowa_last_2, 
+                encoder.block.method = 'binary', 
+                n.cores = 1, 
+                known.matches = iowa_true_matches[,1:2])
+```
+
+
+```{r}
+blocks <- block(iowa_1915, iowa_1940, 
+                cols.encoder=cols.encoder, 
+                encoder.model.path=encoder_iowa_last_4, 
+                encoder.block.method = 'binary', 
+                n.cores = 1, 
+                known.matches = iowa_true_matches[,1:2])
+```
+
+
+
+
+```{r}
+blocks <- block(iowa_1915, iowa_1940, 
+                cols.encoder=cols.encoder, 
+                encoder.model.path=encoder_iowa_last_8, 
+                encoder.block.method = 'binary', 
+                n.cores = 1, 
+                known.matches = iowa_true_matches[,1:2])
+```
+
+
+
+```{r}
+blocks <- block(iowa_1915, iowa_1940, 
+                cols.encoder=cols.encoder, 
+                encoder.model.path=encoder_iowa_last_24, 
+                encoder.block.method = 'binary', 
+                n.cores = 1, 
+                known.matches = iowa_true_matches[,1:2])
+```
+
+
+```{r}
+blocks <- block(iowa_1915, iowa_1940, 
+                cols.encoder=cols.encoder, 
+                encoder.model.path=encoder_iowa_last_48, 
+                encoder.block.method = 'binary', 
+                n.cores = 1, 
+                known.matches = iowa_true_matches[,1:2])
+```
+
+
+```{r}
+blocks <- block(iowa_1915, iowa_1940, 
+                cols.encoder=cols.encoder, 
+                encoder.model.path=encoder_iowa_last_96, 
+                encoder.block.method = 'binary', 
+                n.cores = 1, 
+                known.matches = iowa_true_matches[,1:2])
+```
+
+
+
+```{r}
+binary_blocks <- data.frame(dim.latent=c("2", "4", "8", "24", "48", "96"), 
+                             proportion.comparisons=c(49.48, 35.49, 6.06, 0.127, 0.121, 0.129), 
+                             paris.completeness=c(93.89, 91.02, 81.9, 73.31,72.15,71.83))
+
+binary_blocks$dim.latent <- factor(binary_blocks$dim.latent, levels=binary_blocks$dim.latent)
+
+g <- ggplot(data=binary_blocks, aes(x=dim.latent, y=proportion.comparisons)) + 
+  geom_bar(stat='identity') +
+  geom_text(aes(label=proportion.comparisons), vjust=-.3, color="gray", size=3.5)+
+  ggtitle('Proportion of Comparisons After Blocking on Binarized Encoded Vectors') + 
+  theme_minimal() 
+g
+```
+
+
+```{r}
+binary_blocks <- data.frame(dim.latent=c("2", "4", "8", "24", "48", "96"), 
+                             proportion.comparisons=c(49.48, 35.49, 6.06, 0.127, 0.121, 0.129), 
+                             pairs.completeness=c(93.89, 91.02, 81.9, 73.31,72.15,71.83))
+
+binary_blocks$dim.latent <- factor(binary_blocks$dim.latent, levels=binary_blocks$dim.latent)
+
+g <- ggplot(data=binary_blocks, aes(x=dim.latent, y=pairs.completeness)) + 
+  geom_bar(stat='identity') +
+  geom_text(aes(label=pairs.completeness), vjust=-.3, color="gray", size=3.5)+
+  ggtitle('Proportion of Comparisons After Blocking on Binarized Encoded Vectors') + 
+  theme_minimal() 
+g
+```
+
+
+

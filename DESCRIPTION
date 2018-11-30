@@ -1,25 +1,27 @@
 Package: recordlinkR
 Title: recordlinkR
 Version: 0.0.0.1000
-Authors@R: person("Kailin", "Lu", email = "first.last@example.com", role = c("aut", "cre"))
+Authors@R: person("Kailin", "Lu", email = "kl2978@columbia.com", role = c("aut", "cre"))
 Description: What the package does (one paragraph).
 Depends: R (>= 3.5.0)
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-Imports: keras,
+Imports: 
+    keras,
     ggplot2,
     purrr,
     tensorflow,
     stringr,
-    tidyr,
     magrittr,
     parallel,
     data.table,
     stringdist,
     Rtsne,
     e1071,
-    stats
+    stats,
+    tidyr,
+    AUC
 Suggests: knitr,
     rmarkdown,
     testthat

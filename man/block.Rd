@@ -90,9 +90,18 @@ Logs are recorded in the /tmp/ directory}
 \item{n.cores}{cores to parallelize over}
 }
 \value{
-Nested list of blocks where each block is one encoding. 
-Sub-lists are of indices of namesA and namesB belonging to each block
+blocklist object with 7 values 
+\item{dfA}{dataframeA with encoded vectors appended}
+\item{dfB}{dataframeB with encoded vectors appended}
+\item{blocks}{data.table with each row representing one pair of records} 
+\item{block.metrics}{Metrics on block quality}
+\item{encoder}{encoder model if encoder was used}
+\item{encoded.A}{matrix of encoded values from dataframeA}
+\item{encoded.B}{matrix of encoded values from dataframeB}
 }
 \description{
-Block data to reduce the number of comparisons needed for linkage
+Calculates cartesian product of records in two dataframes and filters out pairs which are 
+unlikely to be matches. Blocks can be formed by comparing exact values, comparing values which are 
+with a range of each other, and string comparisons using vector encodings. Encoded vectors can be 
+blocked using the binary method or by clustering encoded vectors.
 }

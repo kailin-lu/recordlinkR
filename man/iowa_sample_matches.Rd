@@ -4,7 +4,7 @@
 \name{iowa_sample_matches}
 \alias{iowa_sample_matches}
 \title{Iowa Census Sample Matches}
-\format{Dataframe with 4320 observations}
+\format{Dataframe with 1000 observations}
 \usage{
 iowa_sample_matches
 }

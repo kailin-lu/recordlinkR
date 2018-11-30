@@ -11,47 +11,71 @@ require(stringr)
 #' 
 #'
 #' @param df Dataframe
-#' @param cols Vector of column names to clean
-#' @param split if at least one of the columns in cols needs to be split
-#' @param split.pattern Vector of pattern to split on in order of columns to be split 
-#' @param new.col.names Named list. Names are names of columns to be split, values are 
-#' vectors of new column names post split.  
-#' @param lower  cols are lower-cased, if FALSE cols are returned with case as is 
-#' @param strip.punctuation  punctuation is stripped from cols, if FALSE all 
-#' puntuation is left as is 
+#' @param cols Vector of variables to apply changes to. If 'all' then cols = '.'
+#' @param split.pattern Named list of character to split variables. Variables are list names 
+#' and values are the character to be split on 
+#' @param split.col.names Named list of new variable names. Variables are list names and 
+#' values are vectors of new variable names. Maximum number of splits on each column is the length of values. 
+#' @param lower  if TRUE then all elements in df[cols] will be lower cased 
+#' @param strip.punctuation  if TRUE then all elements in df[cols] will be stripped of punctuation
 #' 
 #' @return Dataframe with processed character columns
 #' 
 #' @importFrom magrittr "%>%"
 #' @export
-cleanNames <- function(df, cols, 
-                       split = FALSE,
-                       split.pattern = ',', 
-                       new.col.names = NULL,
+cleanNames <- function(df, cols = '.', 
+                       split.pattern = NULL, 
+                       split.col.names = NULL,
                        lower = TRUE, 
                        strip.punctuation = TRUE) {
-  if (lower) {
-    df[cols] <- as.data.frame(apply(df[,cols], 2, tolower))
+  if (cols == '.') {
+    cols <- colnames(df)
   }
-  if (split) {
-    for (i in 1:length(new.col.names)) {
-      col <- names(new.col.names)[i]
-      df <- df%>% 
-        tidyr::separate(col, 
-                        sep = split.pattern[i], 
-                        into = new.col.names[[col]], 
-                        extra = 'merge')
+  
+  if (lower) {
+    if (dim(df)[2] == 1) {
+      colname <- colnames(df)
+      df[1] <- as.data.frame(apply(df, 1, tolower), stringsAsFactors = FALSE)
+      colnames(df) <- colname
+    }
+    else {
+      df[cols] <- as.data.frame(apply(df[,cols], 2, tolower), stringsAsFactors = FALSE)
     }
   }
   
-  new.cols <- unlist(new.col.names, use.names = FALSE)
-  if (strip.punctuation) {
-    df[new.cols] <- as.data.frame(apply(df[new.cols], 1:2, 
-                                          stringr::str_replace_all, pattern='[:punct:]', ''))
-  }
-  # Convert all factors to characters
-  i <- sapply(df, is.factor)
-  df[i] <- lapply(df[i], as.character)
+  if (!is.null(split.pattern)) {
     
+    # Check that split.pattern variables match split.col.names variables
+    if (all(names(split.pattern) != names(split.col.names))){
+      stop('Names of `split.pattern` and `split.col.names` must match.')
+    }
+  
+    for (i in 1:length(names(split.pattern))) {
+      col <- names(split.col.names)[i]
+      sep <- ifelse(split.pattern[[col]] == ' ', '\\s+', split.pattern[[col]])
+      
+      df <- df %>% tidyr::separate(col,
+                                   sep = sep,
+                                   into = split.col.names[[col]],
+                                   extra = 'merge', 
+                                   fill = 'right')
+      df[,split.col.names[[col]]][is.na(df[,split.col.names[[col]]])] <- ''
+    }
+  }
+  
+  cols <- union(unlist(split.col.names, use.names = FALSE), intersect(cols, colnames(df)))
+  if (strip.punctuation) {
+    if (dim(df)[2] == 1) {
+      colname <- colnames(df)
+      df[1] <- as.data.frame(apply(df, 1, stringr::str_replace_all, pattern='[[:punct:]]', ''), 
+                             stringsAsFactors = FALSE)
+      colnames(df) <- colname
+    }
+    else {
+      df[cols] <- as.data.frame(apply(df[cols], 1:2, stringr::str_replace_all, pattern='[[:punct:]]', ''), 
+                                stringsAsFactors = FALSE)
+    }
+  }
   return(df)
 }
+

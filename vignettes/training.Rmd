@@ -24,8 +24,59 @@ data(iowa_sample)
 ```
 
 
-# Check whether this takes names or encoded A 
-plotNames(names=iowa_1915$fname1915[1:1000], n.samples = 1000, encoder.model.path = "~/blocking_models/iowa_first_4/encoder.h5") 
+This chunk is set to currently not run for convenience. Default parameters of the model are likely 
+not sufficient to achieve a good model fit. 
+
+To see parameters and check default settings on the model, see the help manual at `?trainModel`. 
+
+```{r eval=FALSE}
+namesA <- iowa_1915$lname1915[iowa_true_matches$index1915]
+namesB <- iowa_1940$lname1940[iowa_true_matches$index1940]
+
+encoder <- trainModel(namesA = namesA, 
+                      namesB = namesB, 
+                      dim.encode = 64, 
+                      dim.decode = 64,
+                      dim.latent = 48, 
+                      num.encode.layers = 2, 
+                      num.decode.layers = 2, 
+                      earlystop.patience = 20, 
+                      batch.size = 32,
+                      epochs = 350, 
+                      lr = 5e-4, 
+                      save.dir="~/blocking_models/iowa_last_48/")
+```
+
+```{r}
+encoder
+```
+
+
+
+```{r}
+save(encoder_iowa_last_48, file="encoder_iowa_last_48.rda")
+```
+
+Outside of model accuracy, models can be evaluated by plotting a sample of names represented as a 
+2-dimensional projection of the latent space. 
+
+```{r}
+# Load prepackaged sample encoders 
+loadSampleEncoders()
+
+# Plot sample of 100 first names 
+plotNames(names=iowa_1915$fname1915, 
+          n.samples = 100, 
+          encoder.model.path = encoder_iowa_first_512) 
+```
+
+
+
+
+
+
+
+
 
 
 

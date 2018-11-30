@@ -6,7 +6,7 @@
 \usage{
 trainModel(namesA, namesB, dim.latent = 8, dim.encode = 64,
   dim.decode = 64, max.length = 12, num.encode.layers = 2,
-  num.decode.layers = 2, batch.size = 32, epochs = 500, lr = 1e-04,
+  num.decode.layers = 2, batch.size = 32, epochs = 100, lr = 1e-04,
   validation.split = 0.2, save.dir = "~/blocking_models/",
   reconstruct = TRUE, reconstruct.n = 5, reconstruct.display = 20,
   earlystop = TRUE, earlystop.patience = 10, tensorboard = TRUE,

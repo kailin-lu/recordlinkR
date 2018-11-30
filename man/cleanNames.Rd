@@ -4,25 +4,23 @@
 \alias{cleanNames}
 \title{cleanNames}
 \usage{
-cleanNames(df, cols, split = FALSE, split.pattern = ",",
-  new.col.names = NULL, lower = TRUE, strip.punctuation = TRUE)
+cleanNames(df, cols = ".", split.pattern = NULL,
+  split.col.names = NULL, lower = TRUE, strip.punctuation = TRUE)
 }
 \arguments{
 \item{df}{Dataframe}
 
-\item{cols}{Vector of column names to clean}
+\item{cols}{Vector of variables to apply changes to. If 'all' then cols = '.'}
 
-\item{split}{if at least one of the columns in cols needs to be split}
+\item{split.pattern}{Named list of character to split variables. Variables are list names 
+and values are the character to be split on}
 
-\item{split.pattern}{Vector of pattern to split on in order of columns to be split}
+\item{split.col.names}{Named list of new variable names. Variables are list names and 
+values are vectors of new variable names. Maximum number of splits on each column is the length of values.}
 
-\item{new.col.names}{Named list. Names are names of columns to be split, values are 
-vectors of new column names post split.}
+\item{lower}{if TRUE then all elements in df[cols] will be lower cased}
 
-\item{lower}{cols are lower-cased, if FALSE cols are returned with case as is}
-
-\item{strip.punctuation}{punctuation is stripped from cols, if FALSE all 
-puntuation is left as is}
+\item{strip.punctuation}{if TRUE then all elements in df[cols] will be stripped of punctuation}
 }
 \value{
 Dataframe with processed character columns

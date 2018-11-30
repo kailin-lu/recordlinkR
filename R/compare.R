@@ -34,8 +34,20 @@ compare <- function(dfA, dfB, blocks,
   
   # Check if comparing using encoder, that encoder model path is specified 
   if (is.null(encoder.model.path) && !(is.null(compare.string.encoder))) {
-    cat('\nNeed an encoder model path to compare by encoding.')
-    return()
+    stop('\nNeed an encoder model path to compare by encoding.')
+  }
+  
+  # If encoder is specified check that correct model object is specified 
+  if (!is.null(compare.string.encoder)) {
+    if (typeof(encoder.model.path) == 'chr') {
+      encoder <- keras::load_model_hdf5(encoder.model.path)
+    }
+    else if (typeof(encoder.model.path) == 'closure') {
+      encoder <- encoder.model.path
+    }
+    else {
+      stop('Encoder model not specified.')
+    }
   }
   
   comparisons <- vector(mode = 'list', length = length(compare.string.encoder[['A']]) + 

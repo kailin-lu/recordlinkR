@@ -6,7 +6,10 @@ library(parallel)
 
 #' block 
 #' 
-#' Block data to reduce the number of comparisons needed for linkage
+#' Calculates cartesian product of records in two dataframes and filters out pairs which are 
+#' unlikely to be matches. Blocks can be formed by comparing exact values, comparing values which are 
+#' with a range of each other, and string comparisons using vector encodings. Encoded vectors can be 
+#' blocked using the binary method or by clustering encoded vectors. 
 #' 
 #' 
 #' @param dfA Dataframe to be linked to \code{dfB}
@@ -47,8 +50,14 @@ library(parallel)
 #' @param verbose Verbosity level for training output, 0 = silence, 1 = minimal, 2 = verboses
 #' @param n.cores cores to parallelize over
 #' 
-#' @return Nested list of blocks where each block is one encoding. 
-#' Sub-lists are of indices of namesA and namesB belonging to each block
+#' @return blocklist object with 7 values 
+#' \item{dfA}{dataframeA with encoded vectors appended}
+#' \item{dfB}{dataframeB with encoded vectors appended}
+#' \item{blocks}{data.table with each row representing one pair of records} 
+#' \item{block.metrics}{Metrics on block quality}
+#' \item{encoder}{encoder model if encoder was used}
+#' \item{encoded.A}{matrix of encoded values from dataframeA}
+#' \item{encoded.B}{matrix of encoded values from dataframeB}
 #' 
 #' @export 
 block <- function(dfA, dfB, 
@@ -74,8 +83,7 @@ block <- function(dfA, dfB,
                   n.cores = parallel::detectCores()-1) {
 
   if (is.null(cols.exact) & is.null(cols.numeric) & is.null(cols.encoder)) {
-    cat('\n WARNING: NO BLOCKING COLUMNS SELECTED.')
-    return()
+    stop('\n WARNING: NO BLOCKING COLUMNS SELECTED.')
   }
   
   # Check that every column in A has a comparison column in B 
@@ -185,7 +193,7 @@ block <- function(dfA, dfB,
               'encoder' = encoder, 
               'encoded.A' = encoded.A, 
               'encoded.B' = encoded.B) 
-  attr(blocks, "class") <- 'blocklist'
+  class(blocks) <- "blocklist"
   return(blocks)
 }
 
@@ -283,6 +291,62 @@ blockNumeric <- function(dfA, dfB, n.cores,
   return(numeric.blocks)
 }
 
+#' encodeVector
+#' 
+#' Encodes a character vector with existing model 
+#'
+#' @param vec Character vector to encoded 
+#' @param model Keras encoding model or path to Keras h5 model
+#' 
+#' @return Matrix of encoded values with dimensions length(vec) x dim.latent 
+#' 
+#' @export
+encodeVector <- function(vec, model) {
+  if (!is.null(model)) {
+    if (typeof(model) == 'closure') {
+      encoder <- model
+      cat('\nEncoder loaded.')
+    }
+    else if (typeof(model) == 'chr') {
+      encoder <- keras::load_model_hdf5(model)
+      cat('\nEncoder has been loaded from ', model) 
+    }
+    else {
+      stop('`model` must be either a Keras model or path to Keras model.')
+    }
+    max.length <- keras::get_layer(encoder, 'input_1')$input_shape[[2]]
+  }
+  else {
+    cat('\nNo existing model specified. Please specify model or model path.')
+  }
+    
+  # Embed names 
+  embedded <- recordlinkR::embedLetters(vec, max.length = max.length)
+  
+  # Encode names to be matched
+  encoded <- encoder %>% stats::predict(embedded)
+  return(encoded)
+}
+
+# Function to binarize using median 
+binarize <- function(x, med) {
+  apply(t(apply(x, 1, function(m) {m >= med})), 1:2, sum)
+}
+
+#' binarizeVector
+#' 
+#' Converts encoded matrix to binary matrix 
+#' 
+#' @param mat matrix 
+#' @export 
+binarizeVector <- function(mat, med=NA) {
+  if (is.na(med)) {
+    med <- apply(mat, 2, stats::median)
+  }
+  binarized <- binarize(mat, med)
+  return(list(binarized, med))
+}
+
 #' encode
 #' 
 #' Adds encoded columns to dataframes to be linked 
@@ -335,9 +399,18 @@ encode <- function(dfA, dfB, cols.encoder,
   
   # If encoder model path has been specified, load the load 
   if (!is.null(encoder.model.path)) {
-    encoder <- keras::load_model_hdf5(encoder.model.path)
+    if (typeof(encoder.model.path) == 'closure') {
+      encoder <- encoder.model.path
+      cat('\nEncoder loaded.')
+    }
+    else if (typeof(encoder.model.path) == 'chr') {
+      encoder <- keras::load_model_hdf5(encoder.model.path)
+      cat('\nEncoder has been loaded from ', encoder.model.path) 
+    }
+    else {
+      stop('`encoder.model.path` must be either a Keras model or path to Keras model.')
+    }
     max.length <- keras::get_layer(encoder, 'input_1')$input_shape[[2]]
-    cat('\nEncoder has been loaded from ', encoder.model.path) 
   }
   else {
     cat('\nNo existing model specified. Begin training new encoder.')
@@ -380,7 +453,7 @@ encode <- function(dfA, dfB, cols.encoder,
     encoded.cols.A[[i]] <- encoded.A
     encoded.cols.B[[i]] <- encoded.B
     
-    # Add embedded vectors to dataframes 
+    # Add encoded vectors to dataframes 
     encoded.dfA <- data.frame(encoded.A)
     colnames(encoded.dfA) <- paste(cols.encoder[['A']][[i]], 'enc', 1:dim(encoded.A)[2], sep = '_')
     dfA <- cbind(dfA, encoded.dfA)

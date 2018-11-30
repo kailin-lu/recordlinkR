@@ -1,0 +1,114 @@
+---
+title: "Blocking and Linking"
+author: "Kailin Lu"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r}
+library(recordlinkR)
+
+# Load sample Iowa data
+data(iowa_sample)
+```
+
+
+### Dataset Description
+
+The sample Iowa dataset contains last name, first name, year of birth, and middle initial for a subset of names from the 1915 and the 1940 Iowa Census. Unique identifiers `uid1915` and `hhid` are available in the iowa_1915 and iowa_1940 datasets respectively, but do not correspond across datasets. The rows of iwoa_matches denote true links using the row index from iowa_1915 and iowa_1940. 
+
+```{r}
+head(iowa_1915)
+```
+
+
+### Create Blocks 
+```{r}
+# Load sample encoders 
+loadSampleEncoders() 
+
+cols.encoder <- list('A'='fname1915', 'B'='fname1940')
+```
+
+```{r}
+blocks <- block(iowa_1915, iowa_1940, 
+                cols.encoder=cols.encoder, 
+                encoder.model.path=encoder_iowa_first_4, 
+                encoder.block.method = 'cluster', 
+                encoder.nclusters = 10,
+                n.cores = 1 )
+```
+
+If a set of true matches are known, then you can check to see how many pairs are remaining post blocking. In this case 
+we have reduce the total number of pairs to compare to 10.7% of the original number while retaining 92.2% of the sample 
+matches in the remaining set. 
+
+```{r}
+blocks <- block(iowa_1915, iowa_1940, 
+                cols.encoder=cols.encoder, 
+                encoder.model.path=encoder_iowa_first_4, 
+                encoder.block.method = 'cluster', 
+                encoder.nclusters = 10, 
+                known.matches = iowa_sample_matches[iowa_sample_matches$match == 1][,1:2], 
+                n.cores = 1)
+```
+
+
+# AUC plot 
+
+```{r}
+dfA <- blocks[['dfA']]
+dfB <- blocks[['dfB']]
+block.pairs <- blocks[['blocks']][1:1000,]
+```
+
+
+```{r}
+# Encode and check AUC 
+fname.encoded <- encode(iowa_1915[block.pairs$V1,], iowa_1940[block.pairs$V2,], 
+                        cols.encoder = list('A'='fname1915', 'B'='fname1940'), 
+                        encoder.model.path = encoder_iowa_first_256)
+```
+
+```{r}
+fname1915.encoded <- fname.encoded[['encoded.A']][[1]]
+fname1940.encoded <- fname.encoded[['encoded.B']][[1]]
+```
+
+
+```{r}
+cos.similarity <- function(A, B) {
+  (A%*% B) / (norm(A) * norm(B)) 
+}
+```
+
+
+# Making comparisons 
+
+```{r}
+# encoder.string.cols <- list('A'='fname1915', 'B'='fname1940') 
+# comparisons <- compare(dfA = dfA, dfB = dfB, 
+#                        blocks = block.pairs, 
+#                        compare.string.encoder = encoder.string.cols, 
+#                        encoder.model.path = encoder_iowa_first_512)
+```
+
+
+
+
+
+
+
+
+

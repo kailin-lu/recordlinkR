@@ -29,7 +29,7 @@ Below is an example of a dataset with several name columns following different f
 
 ```{r}
 # Some sample character and numeric data 
-names <- c('Doe, Jon', 'GRAY, Amy**', 'JACKSON, MICHAEL', 'smith, jane')
+names <- c('Doe, Jon', 'GRAY, Amy**', 'JACKSON, MICHAEL!', 'smith, jane')
 mothers.names <- c('Dorian\' Do', 'Brittany John-son Smith', 'Mary JACKSON', 'Sam')
 nicknames <- c('JON', 'AMY', 'MIKE', 'JAN')
 age <- c(15, 14, 12, 17)
@@ -40,15 +40,39 @@ data <- data.frame(names, mothers.names, nicknames, age, stringsAsFactors = FALS
 knitr::kable(data, caption = 'Sample Dataframe')
 ```
 
+The function to preprocess a dataframe is `cleanNames`. 
+
+To apply changes to the variables names, mothers.names, and nicknames, add as a vector to the `cols` parameter of cleanNames. By default, `lower` and `strip.punctuation` are TRUE. 
+
 ```{r}
 data.cleaned <- cleanNames(data,
                            cols = c('names', 'mothers.names', 'nicknames'),
-                           split = T,
-                           split.pattern = c(',', ' '),
-                           new.col.names = list('names' = c('last', 'first'),
-                                                'mothers.names' = c('first.m', 'last.m')),
                            lower = T,
                            strip.punctuation = T)
-
 knitr::kable(data.cleaned, caption = 'Cleaned Sample Dataframe')
 ```
+
+To train an encoder model on names it is helpful to train models on first or last names alone, rather than in conjunction. 
+String columns can be split using `cleanNames` by specifying a character split on and names of the newly created variables. 
+
+
+```{r}
+split.pattern <- list('names' = ',', 'mothers.names' = ' ')
+new.col.names <- list('names' = c('last', 'first'), 'mothers.names' = c('mothers.first', 'mothers.last'))
+  
+data.cleaned.and.split <- cleanNames(data,
+                                     cols = c('names', 'mothers.names', 'nicknames'),
+                                     split.pattern = split.pattern, 
+                                     split.col.names = new.col.names, 
+                                     lower = T,
+                                     strip.punctuation = T)
+
+knitr::kable(data.cleaned.and.split, caption = 'Cleaned Sample Dataframe with Split Columns')
+```
+
+
+
+
+
+
+

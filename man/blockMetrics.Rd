@@ -11,12 +11,20 @@ blockMetrics(dfA, dfB, blocks, known.matches = NULL)
 
 \item{dfB}{dataframe B}
 
-\item{blocks}{Blocks}
+\item{blocks}{Dataframe of two columns representing pairs to be checked post blocking}
 
-\item{known.matches}{indices}
+\item{known.matches}{Dataframe of two columns representing indices of known matches 
+where the left index refers to a record index in dfA and 
+the right index refers to a record index in dfB}
 }
 \value{
 List of metrics
+\item{original.comparisons}{Number of original comparisons}
+\item{remaining.comparisons}{Number of comparisons remaining post blocking}
+\item{pairs.reduction}{Proportion of original comparisons remaining post blocking}
+\item{total.known.matches}{If known.matches was provided, number of total known matches}
+\item{found.matches}{Number of known matches found in the remaning pairs}
+\item{pairs.completeness}{Percentage of known matches found in remaining pairs}
 }
 \description{
 Reports block metrics to assess quality of blocking. If known matches are null then
