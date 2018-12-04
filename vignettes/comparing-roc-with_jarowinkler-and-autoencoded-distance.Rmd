@@ -590,7 +590,7 @@ binary_blocks$dim.latent <- factor(binary_blocks$dim.latent, levels=binary_block
 g <- ggplot(data=binary_blocks, aes(x=dim.latent, y=pairs.completeness)) + 
   geom_bar(stat='identity') +
   geom_text(aes(label=pairs.completeness), vjust=-.3, color="gray", size=3.5)+
-  ggtitle('Proportion of Comparisons After Blocking on Binarized Encoded Vectors') + 
+  ggtitle('Pairs Completeness After Blocking on Binarized Encoded Vectors') + 
   theme_minimal() 
 g
 ```
